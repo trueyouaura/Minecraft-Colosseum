@@ -69,8 +69,28 @@ legend{display:block}.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px
 #storageMessage:not(:empty){color:#f7ce81;margin:9px 0}
 @media(max-width:850px){.progress-checklists,.progress-overview{grid-template-columns:1fr}.site-tabs .tag{margin-left:0}}
 @media(max-width:520px){.run-command-line code,.command-line code{width:100%;flex-basis:100%}.copy-command-button,.mark-command-button{min-height:34px}.checklist-item{flex-wrap:wrap}}
+/* Fixed quick navigation rail: stays accessible while scrolling. */
+@media(min-width:901px){body{padding-right:150px}}
+.quick-nav{position:fixed;z-index:110;right:10px;top:50%;transform:translateY(-50%);width:132px;padding:10px;background:#172a3e;border:1px solid #64849f;border-radius:12px;box-shadow:0 8px 28px #0009;color:#ecf4fa;font-size:12px}
+.quick-nav-title{font-weight:800;letter-spacing:.06em;color:#f6d69a;text-align:center;margin:0 0 8px}
+.quick-nav-section+.quick-nav-section{margin-top:10px;border-top:1px solid #476078;padding-top:10px}
+.quick-nav-label{font-weight:700;color:#f5d79c;text-align:center;margin-bottom:5px}
+.quick-nav button{display:block;width:100%;margin:5px 0;padding:7px 5px;font-size:12px;font-weight:650;text-align:center}
+.quick-nav button:disabled{opacity:.4;cursor:not-allowed}
+.quick-nav-hint{margin-top:8px;color:#bdcad9;font-size:10px;text-align:center;line-height:1.4}
+@media(max-width:900px){.quick-nav{top:auto;bottom:8px;transform:none;right:8px;width:118px;padding:8px}.quick-nav button{padding:5px 3px}.quick-nav-hint{display:none}main{padding-bottom:210px}}
 </style></head><body>
 <header><h1>THE COLOSSEUM - NUMBERED 1-BLOCK GRID</h1><p>56 build layers | 188 blocks X by 156 blocks Z | mapped to YOUR Minecraft Java world</p></header>
+<aside class="quick-nav" id="quickNav" aria-label="Quick row and layer navigation">
+<div class="quick-nav-title">QUICK NAV</div>
+<div class="quick-nav-section"><div class="quick-nav-label" id="quickRowLabel">Row Z 495</div>
+<button type="button" id="quickRowPrev" title="Go to the previous Z row, immediately show its fill commands">↑ Previous row</button>
+<button type="button" id="quickRowNext" title="Go to the next Z row, immediately show its fill commands">↓ Next row</button></div>
+<div class="quick-nav-section"><div class="quick-nav-label" id="quickLayerLabel">Layer −7 · Y 120</div>
+<button type="button" id="quickLayerPrev" title="Go down one layer, immediately show this row's fill commands">− Layer down</button>
+<button type="button" id="quickLayerNext" title="Go up one layer, immediately show this row's fill commands">+ Layer up</button></div>
+<div class="quick-nav-hint">One click updates the row commands below. Nothing is copied automatically.</div>
+</aside>
 <main>
 <nav class="panel wide site-tabs" aria-label="Site sections">
 <button id="tabBuild" class="site-tab" aria-selected="true" type="button">🧱 Blueprint</button>
@@ -179,7 +199,7 @@ function renderRuns(kind){
   return runs;
 }
 function paintSelected(){let id=matAt(selectedX,selectedZ),mat=BLOCKS[id],x=X0+selectedX,z=Z0+selectedZ,y=Y0+layer;$('selected').innerHTML=`<strong>${mat.name}</strong> &nbsp; <span class="dot" style="background:${mat.color}"></span><br>Exact world block: <strong>X ${x}, Y ${y}, Z ${z}</strong> &nbsp; | &nbsp; Local: X ${selectedX}, Z ${selectedZ}<br><code>${mat.minecraft}</code> &nbsp; • &nbsp; ${id===0?'Leave this coordinate EMPTY':'Place exactly 1 block here'}`;$('jumpX').value=x;$('jumpZ').value=z;renderRuns('row');renderRuns('column')}
-function render(){paintOverview();paintDetail();paintSelected();$('layerSelect').value=layer;$('layer').value=layer;$('worldY').textContent='World Y '+(Y0+layer)}
+function render(){paintOverview();paintDetail();paintSelected();$('layerSelect').value=layer;$('layer').value=layer;$('worldY').textContent='World Y '+(Y0+layer);updateQuickNav()}
 async function writeClipboard(t){
   if(navigator.clipboard && navigator.clipboard.writeText){
     try{await navigator.clipboard.writeText(t);return true;}catch(e){}
@@ -229,6 +249,26 @@ ov.addEventListener('click',e=>{let r=ov.getBoundingClientRect(),cx=(e.clientX-r
 dt.addEventListener('click',e=>{let r=dt.getBoundingClientRect(),cx=(e.clientX-r.left)*dt.width/r.width,cz=(e.clientY-r.top)*dt.height/r.height;let x=Math.floor((cx-(+dt.dataset.padL))/(+dt.dataset.size))+(+dt.dataset.left),z=Math.floor((cz-(+dt.dataset.padT))/(+dt.dataset.size))+(+dt.dataset.top);if(x<0||x>=W||z<0||z>=H)return;selectedX=x;selectedZ=z;render()});
 $('saveMap').onclick=()=>{let a=document.createElement('a');a.href=ov.toDataURL('image/png');a.download='Colosseum_numbered_overview_Y'+(Y0+layer)+'.png';a.click()};
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')return;if(e.key==='ArrowUp')setFocus(selectedX,selectedZ-1);if(e.key==='ArrowDown')setFocus(selectedX,selectedZ+1);if(e.key==='ArrowLeft')setFocus(selectedX-1,selectedZ);if(e.key==='ArrowRight')setFocus(selectedX+1,selectedZ)});
+/* Fixed quick-nav: changing row/layer also PREVIEWS that row's commands,
+   without copying to the clipboard or marking any blocks placed. */
+function updateQuickNav(){
+  $('quickRowLabel').textContent='Row Z '+(Z0+selectedZ);
+  $('quickLayerLabel').textContent='Layer '+(layer>=0?'+':'')+layer+' · Y '+(Y0+layer);
+  $('quickRowPrev').disabled=selectedZ===0;
+  $('quickRowNext').disabled=selectedZ===H-1;
+  $('quickLayerPrev').disabled=layer===-7;
+  $('quickLayerNext').disabled=layer===48;
+}
+function showCurrentRowCommands(){
+  const text=commands('row');
+  $('commands').value=text;
+  showIndividualCommands(text); // Progress-tracker wrapper adds Mark placed buttons.
+  $('individualCommands').scrollTop=0;
+}
+$('quickRowPrev').addEventListener('click',()=>{if(selectedZ>0){setFocus(selectedX,selectedZ-1);showCurrentRowCommands();}});
+$('quickRowNext').addEventListener('click',()=>{if(selectedZ<H-1){setFocus(selectedX,selectedZ+1);showCurrentRowCommands();}});
+$('quickLayerPrev').addEventListener('click',()=>{if(layer>-7){layer--;render();showCurrentRowCommands();}});
+$('quickLayerNext').addEventListener('click',()=>{if(layer<48){layer++;render();showCurrentRowCommands();}});
 render();
 </script><script>
 /* COLOSSEUM PROGRESS TRACKER v2.0
