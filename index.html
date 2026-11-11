@@ -79,6 +79,24 @@ legend{display:block}.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px
 .quick-nav button:disabled{opacity:.4;cursor:not-allowed}
 .quick-nav-hint{margin-top:8px;color:#bdcad9;font-size:10px;text-align:center;line-height:1.4}
 @media(max-width:900px){.quick-nav{top:auto;bottom:8px;transform:none;right:8px;width:118px;padding:8px}.quick-nav button{padding:5px 3px}.quick-nav-hint{display:none}main{padding-bottom:210px}}
+
+/* Material-first build mode. Layer panels load commands only when expanded. */
+.material-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:10px 0}
+.material-toolbar select{min-width:min(390px,100%);max-width:100%}
+.material-summary{background:#0e2639;border:1px solid #42647b;border-radius:9px;padding:12px 14px;font-weight:650;color:#f4daa7}
+.material-layer{background:#0e2032;border:1px solid #405b73;border-radius:9px;margin:9px 0;overflow:hidden}
+.material-layer>summary{cursor:pointer;padding:12px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:#192d40;color:#f5d99e}
+.material-layer>summary:hover{background:#254056}
+.material-layer-count{margin-left:auto;color:#d4e4ee;font-weight:550;font-size:12px}
+.material-command-list{height:540px;min-height:160px;max-height:85vh;resize:vertical;overflow:auto;padding:5px 10px 12px;background:#0b1a2a}
+.material-row{border-bottom:1px solid #30475b;padding:10px 5px}
+.material-row-heading{display:flex;flex-wrap:wrap;align-items:center;gap:10px;color:#d9e7ef;font-weight:700;margin:0 0 8px}
+.material-row-heading span:last-child{font-size:12px;font-weight:500;color:#adcad8;margin-left:auto}
+.material-command{display:flex;align-items:center;gap:7px;padding:4px 0;min-width:0}
+.material-command code{display:block;flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap;border:1px solid #31536b;background:#102539;border-radius:6px;padding:7px 9px;color:#f6e5b5;font:12px/1.45 ui-monospace,Consolas,monospace}
+.material-empty{padding:14px;color:#aebdcc}
+@media(max-width:640px){.material-command{flex-wrap:wrap}.material-command code{flex:1 1 100%}.material-layer-count{margin-left:0}.material-command-list{height:460px}}
+
 </style></head><body>
 <header><h1>THE COLOSSEUM - NUMBERED 1-BLOCK GRID</h1><p>56 build layers | 188 blocks X by 156 blocks Z | mapped to YOUR Minecraft Java world</p></header>
 <aside class="quick-nav" id="quickNav" aria-label="Quick row and layer navigation">
@@ -95,9 +113,10 @@ legend{display:block}.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px
 <nav class="panel wide site-tabs" aria-label="Site sections">
 <button id="tabBuild" class="site-tab" aria-selected="true" type="button">🧱 Blueprint</button>
 <button id="tabProgress" class="site-tab" aria-selected="false" type="button">☑ Progress Checklist</button>
+<button id="tabMaterial" class="site-tab" aria-selected="false" type="button">🧱 Build by Material</button>
 <span class="tag" id="progressChip" aria-live="polite">Loading progress…</span>
 </nav>
-<section class="panel wide"><div class="controls"><div class="control-group"><label for="layer">Choose layer</label><button id="minus">Previous</button><input id="layer" type="range" min="-7" max="48" step="1" value="-7"><button id="plus">Next</button><select id="layerSelect"></select><strong class="total" id="worldY">World Y 120</strong></div><div class="control-group"><span class="tag">Build X 566–753</span><span class="tag">Build Z 417–572</span><span class="tag">Ground Y 127</span></div></div><div class="note" style="margin-top:12px"><strong>How to read:</strong> Each small square in the close-up = exactly 1 block. The number ABOVE a square is its real Minecraft X; the number to the LEFT is its real Minecraft Z. Dark navy = air/leave empty. Every 5th line is thicker; every 10th is highlighted. Click a square for its material and exact /setblock coordinates.</div></section>
+<section class="panel wide" id="layerControls"><div class="controls"><div class="control-group"><label for="layer">Choose layer</label><button id="minus">Previous</button><input id="layer" type="range" min="-7" max="48" step="1" value="-7"><button id="plus">Next</button><select id="layerSelect"></select><strong class="total" id="worldY">World Y 120</strong></div><div class="control-group"><span class="tag">Build X 566–753</span><span class="tag">Build Z 417–572</span><span class="tag">Ground Y 127</span></div></div><div class="note" style="margin-top:12px"><strong>How to read:</strong> Each small square in the close-up = exactly 1 block. The number ABOVE a square is its real Minecraft X; the number to the LEFT is its real Minecraft Z. Dark navy = air/leave empty. Every 5th line is thicker; every 10th is highlighted. Click a square for its material and exact /setblock coordinates.</div></section>
 <section class="copy-status wide" role="status" aria-live="polite" id="lastCopiedStatus">
 <span class="copy-icon" aria-hidden="true">✓</span>
 <div class="status-copy"><strong>Last command copied</strong><code id="lastCopyText">No command copied yet</code><small id="lastCopyHint">Copy a command to keep track of it.</small></div>
@@ -107,6 +126,20 @@ legend{display:block}.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px
 <section class="panel build-only"><h2 class="sectiontitle">2. Magnified counting grid - every square numbered</h2><p class="subtitle">These are REAL block coordinates, not pixels. Choose a square for its exact material.</p><div class="controls"><div class="control-group"><label for="tileSize">Square size</label><select id="tileSize"><option value="18">18px</option><option value="24" selected>24px</option><option value="30">30px</option><option value="38">38px</option></select></div><div class="control-group"><label for="tileCount">Window</label><select id="tileCount"><option value="15">15 × 15</option><option value="21" selected>21 × 21</option><option value="25">25 × 25</option></select></div></div><div class="gridmove"><button id="north">↑ North 10</button><button id="south">↓ South 10</button><button id="west">← West 10</button><button id="east">→ East 10</button><button id="center">Center</button></div><div class="canvaswrap" id="detailwrap"><canvas id="detail"></canvas></div><p class="caption">Top numbers: X across columns. Left numbers: Z down rows. Orange border: selected block. Thick lines: every 5 blocks. Green dot: marked placed.</p></section>
 <section class="panel wide build-only"><h2 class="sectiontitle">3. Selected block and exact coordinate</h2><div class="controls"><div class="control-group"><label>Jump to real coordinates</label><input id="jumpX" type="number" min="566" max="753" value="659" aria-label="World X"><input id="jumpZ" type="number" min="417" max="572" value="495" aria-label="World Z"><button id="jump">Go</button><button id="copySet">Copy /setblock</button><button id="markSelected" type="button">Mark block placed</button></div><div class="control-group"><button id="saveMap">Download overview PNG</button></div></div><div class="readout" id="selected"></div><div class="columns"><div><h3 id="rowHeader">Selected Z row</h3><div class="rowlist" id="rowRuns" title="Drag the bottom-right corner to resize the row command list"></div><p class="resize-hint">↘ Drag the bottom-right corner to make this list taller or shorter.</p><button id="rowCopy" style="margin-top:8px">Copy all /fill commands for this row</button></div><div><h3 id="columnHeader">Selected X column</h3><div class="rowlist" id="columnRuns" title="Drag the bottom-right corner to resize the column command list"></div><p class="resize-hint">↘ Drag the bottom-right corner to make this list taller or shorter.</p><button id="columnCopy" style="margin-top:8px">Copy all /fill commands for this column</button></div></div><p class="caption">Run length = exactly how many consecutive blocks use that material. Empty/air runs are shown too so you can measure gaps. Commands omit air to avoid accidentally deleting terrain.</p><textarea id="commands" class="read-copy" readonly placeholder="Copied commands appear here too, for manual selection"></textarea><div id="individualCommands" class="individual-commands" aria-label="Individual Minecraft commands with copy buttons"></div><p class="resize-hint">↘ Drag the bottom-right corner of this command list to expand or shrink it.</p></section>
 <section class="panel wide build-only"><h2 class="sectiontitle">Materials legend</h2><div class="legend" id="legend"></div><p class="caption">This is a Minecraft-friendly reconstruction blueprint, not a verified archaeological block-by-block survey. Nothing in this HTML requires a connection or a mod.</p></section>
+
+
+<section class="panel wide" id="materialPanel" hidden>
+  <h2 class="sectiontitle">Build by Material</h2>
+  <p class="subtitle">Pick one material to see every matching /fill command across all 56 levels, organized by layer and Z row. Expand a layer to work through its commands one at a time.</p>
+  <div class="material-toolbar">
+    <label for="materialSelect">Choose material</label>
+    <select id="materialSelect" aria-label="Choose Minecraft building material"></select>
+    <span class="tag" id="materialMinecraftID"></span>
+  </div>
+  <div class="material-summary" id="materialStats" aria-live="polite"></div>
+  <div class="note" style="margin:12px 0"><strong>Copy ≠ placed:</strong> Copy pastes one command into your clipboard. Use <strong>Mark placed</strong> after successfully running the command, or use the Blueprint tab to mark individual blocks placed by hand. All three tabs share the same saved progress. Layer groups load their rows when expanded to keep the site responsive.</div>
+  <div id="materialLayers" class="material-layers"></div>
+</section>
 
 <section class="panel wide" id="progressPanel" hidden>
 <h2 class="sectiontitle">☑ Colosseum build progress</h2>
@@ -566,12 +599,18 @@ render();
   render=function(){originalRender();updateTotals();if(state.tab==='progress')renderProgress();};
   function setTab(tab){
     state.tab=tab;
-    const isProgress=tab==='progress';
+    const isProgress=tab==='progress',isMaterial=tab==='material',isBuild=tab==='build';
     byId('progressPanel').hidden=!isProgress;
-    for(const e of document.querySelectorAll('.build-only'))e.hidden=isProgress;
-    byId('tabBuild').setAttribute('aria-selected',String(!isProgress));
+    byId('materialPanel').hidden=!isMaterial;
+    byId('quickNav').hidden=isMaterial;
+    byId('layerControls').hidden=isMaterial;
+    for(const e of document.querySelectorAll('.build-only'))e.hidden=!isBuild;
+    byId('tabBuild').setAttribute('aria-selected',String(isBuild));
     byId('tabProgress').setAttribute('aria-selected',String(isProgress));
-    if(isProgress)renderProgress();else render();
+    byId('tabMaterial').setAttribute('aria-selected',String(isMaterial));
+    if(isMaterial)renderMaterialBrowser();
+    else if(isProgress)renderProgress();
+    else render();
   }
   function lineCard(kind,pos,idx){
     const m=state.metadata[idx],p=state.progress[idx];
@@ -682,6 +721,150 @@ render();
     for(let idx=0;idx<LAYER_COUNT;idx++){storageRemove(STORE_BASE+'layer-'+idx);state.progress.push(makeProgress(idx,null));}
     refreshProgressUI();
   });
+
+  /* Build by Material uses precisely the same blueprint coordinates and progress
+     bitsets as the ordinary row/column checklist. No duplicate block counting. */
+  const MATERIAL_CHOICE_KEY=STORE_BASE+'selected-material-v1';
+  let materialCatalog=null,materialOpenLayer=null;
+  function prepareMaterialCatalog(){
+    if(materialCatalog)return;
+    materialCatalog=BLOCKS.map((b,id)=>({id,total:0,commandCount:0,layers:new Array(LAYER_COUNT)}));
+    let grandTotal=0;
+    for(let idx=0;idx<LAYER_COUNT;idx++){
+      const arr=getLayerArray(idx);
+      for(let z=0;z<H;z++){
+        let x=0;
+        while(x<W){
+          const start=x,id=arr[z*W+x++];
+          while(x<W&&arr[z*W+x]===id)x++;
+          if(!id)continue;
+          const length=x-start,m=materialCatalog[id];
+          let level=m.layers[idx];
+          if(!level){level={idx,total:0,commandCount:0,rows:[]};m.layers[idx]=level;}
+          let row=level.rows[level.rows.length-1];
+          if(!row||row.z!==z){row={z,total:0,runs:[]};level.rows.push(row);}
+          row.runs.push({start,end:x-1,length});
+          row.total+=length;level.total+=length;level.commandCount++;
+          m.total+=length;m.commandCount++;grandTotal+=length;
+        }
+      }
+    }
+    if(grandTotal!==state.totalBlocks)throw Error('Material totals differ from blueprint totals.');
+    const select=byId('materialSelect'),saved=+storageGet(MATERIAL_CHOICE_KEY);
+    for(let id=1;id<BLOCKS.length;id++){
+      const opt=document.createElement('option');opt.value=id;
+      opt.textContent=BLOCKS[id].name+' ('+fmt(materialCatalog[id].total)+' blocks)';
+      select.append(opt);
+    }
+    select.value=saved>=1&&saved<BLOCKS.length?String(saved):'1';
+  }
+  function countMaterialRowPlaced(idx,row){
+    const bits=state.progress[idx].bits;
+    let result=0;
+    for(const run of row.runs)
+      for(let x=run.start;x<=run.end;x++)
+        result+=bit(bits,row.z*W+x);
+    return result;
+  }
+  function materialCommand(id,idx,z,run){
+    const yy=Y0+idx-7,zz=Z0+z;
+    return '/fill '+(X0+run.start)+' '+yy+' '+zz+' '+(X0+run.end)+' '+yy+' '+zz+' '+BLOCKS[id].minecraft;
+  }
+  function buildMaterialRowView(container,entry,id){
+    const viewport=document.createElement('div');viewport.className='material-command-list';
+    viewport.title='Drag the bottom-right corner to resize this material command list.';
+    for(const row of entry.rows){
+      const group=document.createElement('section');group.className='material-row';
+      const heading=document.createElement('div');heading.className='material-row-heading';
+      const title=document.createElement('strong');title.textContent='Row Z '+(Z0+row.z)+' · '+row.runs.length+' /fill commands · '+fmt(row.total)+' blocks';
+      const count=document.createElement('span');count.className='material-row-count';
+      count.dataset.materialRow=String(row.z);
+      count.dataset.materialLayer=String(entry.idx);
+      heading.append(title,count);group.append(heading);
+      for(const run of row.runs){
+        const line=document.createElement('div');line.className='material-command';
+        const command=materialCommand(id,entry.idx,row.z,run);
+        const code=document.createElement('code');code.textContent=command;
+        const copy=makeCommandButton(command),mark=makePlacedButton(command);
+        line.append(code,copy);if(mark)line.append(mark);
+        group.append(line);
+      }
+      viewport.append(group);
+    }
+    container.replaceChildren(viewport);
+    updateCopyVisuals();
+  }
+  function renderMaterialBrowser(){
+    prepareMaterialCatalog();
+    const select=byId('materialSelect'),id=+select.value,m=materialCatalog[id];
+    byId('materialMinecraftID').textContent=BLOCKS[id].minecraft;
+    const root=byId('materialLayers');root.replaceChildren();
+    const levels=m.layers.filter(Boolean);
+    if(!levels.length){root.textContent='No blueprint commands for that material.';updateMaterialProgress();return;}
+    if(!levels.some(e=>e.idx===materialOpenLayer)){
+      const here=layer+7;
+      materialOpenLayer=(levels.find(e=>e.idx>=here)||levels[0]).idx;
+    }
+    for(const entry of levels){
+      const detail=document.createElement('details');detail.className='material-layer';
+      detail.dataset.materialLayer=String(entry.idx);
+      const summary=document.createElement('summary');
+      const name=document.createElement('strong');
+      const rel=entry.idx-7;name.textContent='Layer '+(rel>=0?'+':'')+rel+' · World Y '+(Y0+rel);
+      const meta=document.createElement('span');
+      meta.textContent=entry.rows.length+' rows · '+fmt(entry.commandCount)+' commands · '+fmt(entry.total)+' blocks';
+      const count=document.createElement('span');count.className='material-layer-count';
+      count.dataset.materialLayerCount=String(entry.idx);
+      summary.append(name,meta,count);
+      const contents=document.createElement('div');
+      detail.append(summary,contents);
+      detail.addEventListener('toggle',()=>{
+        if(!detail.open)return;
+        materialOpenLayer=entry.idx;
+        for(const other of root.querySelectorAll('details[open]'))if(other!==detail)other.open=false;
+        if(!contents.childElementCount)buildMaterialRowView(contents,entry,id);
+        updateMaterialProgress();
+      });
+      root.append(detail);
+      if(entry.idx===materialOpenLayer){
+        detail.open=true;buildMaterialRowView(contents,entry,id);
+      }
+    }
+    updateMaterialProgress();
+  }
+  function updateMaterialProgress(){
+    if(!materialCatalog||state.tab!=='material')return;
+    const id=+byId('materialSelect').value,m=materialCatalog[id];
+    let confirmed=0;
+    for(const entry of m.layers){
+      if(!entry)continue;
+      let placed=0;
+      for(const row of entry.rows){
+        const rowPlaced=countMaterialRowPlaced(entry.idx,row);
+        placed+=rowPlaced;
+        const el=byId('materialLayers').querySelector('[data-material-row="'+row.z+'"][data-material-layer="'+entry.idx+'"]');
+        if(el)el.textContent=rowPlaced+' / '+row.total+' placed';
+      }
+      confirmed+=placed;
+      const el=byId('materialLayers').querySelector('[data-material-layer-count="'+entry.idx+'"]');
+      if(el)el.textContent=placed+' / '+entry.total+' placed';
+    }
+    const layerCount=m.layers.filter(Boolean).length;
+    const rows=m.layers.reduce((n,e)=>n+(e?e.rows.length:0),0);
+    byId('materialStats').textContent=fmt(confirmed)+' / '+fmt(m.total)+' blocks placed ('+pct(confirmed,m.total)+')  ·  '+fmt(m.commandCount)+' commands  ·  '+layerCount+' layers  ·  '+fmt(rows)+' layer/row groups';
+  }
+  const previousRefreshProgressUI=refreshProgressUI;
+  refreshProgressUI=function(){
+    previousRefreshProgressUI();
+    updateMaterialProgress();
+  };
+  byId('tabMaterial').addEventListener('click',()=>setTab('material'));
+  byId('materialSelect').addEventListener('change',e=>{
+    materialOpenLayer=null;
+    storageSet(MATERIAL_CHOICE_KEY,e.target.value);
+    renderMaterialBrowser();
+  });
+
   initialize();
   // 'render' already happened in the base viewer, so refresh its widgets after patching.
   render();
