@@ -71,14 +71,14 @@ legend{display:block}.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px
 @media(max-width:520px){.run-command-line code,.command-line code{width:100%;flex-basis:100%}.copy-command-button,.mark-command-button{min-height:34px}.checklist-item{flex-wrap:wrap}}
 /* Fixed quick navigation rail: stays accessible while scrolling. */
 @media(min-width:901px){body{padding-right:150px}}
-.quick-nav{position:fixed;z-index:110;right:10px;top:50%;transform:translateY(-50%);width:132px;padding:10px;background:#172a3e;border:1px solid #64849f;border-radius:12px;box-shadow:0 8px 28px #0009;color:#ecf4fa;font-size:12px}
+.quick-nav{position:fixed;z-index:110;right:10px;top:50%;transform:translateY(-50%);max-height:calc(100vh - 20px);overflow-y:auto;width:132px;padding:10px;background:#172a3e;border:1px solid #64849f;border-radius:12px;box-shadow:0 8px 28px #0009;color:#ecf4fa;font-size:12px}
 .quick-nav-title{font-weight:800;letter-spacing:.06em;color:#f6d69a;text-align:center;margin:0 0 8px}
 .quick-nav-section+.quick-nav-section{margin-top:10px;border-top:1px solid #476078;padding-top:10px}
 .quick-nav-label{font-weight:700;color:#f5d79c;text-align:center;margin-bottom:5px}
 .quick-nav button{display:block;width:100%;margin:5px 0;padding:7px 5px;font-size:12px;font-weight:650;text-align:center}
 .quick-nav button:disabled{opacity:.4;cursor:not-allowed}
 .quick-nav-hint{margin-top:8px;color:#bdcad9;font-size:10px;text-align:center;line-height:1.4}
-@media(max-width:900px){.quick-nav{top:auto;bottom:8px;transform:none;right:8px;width:118px;padding:8px}.quick-nav button{padding:5px 3px}.quick-nav-hint{display:none}main{padding-bottom:210px}}
+@media(max-width:900px){.quick-nav{top:auto;bottom:8px;transform:none;right:8px;width:118px;padding:8px}.quick-nav button{padding:5px 3px}.quick-nav-hint{display:none}main{padding-bottom:300px}}
 
 /* Material-first build mode. Layer panels load commands only when expanded. */
 .material-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:10px 0}
@@ -99,15 +99,18 @@ legend{display:block}.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px
 
 </style></head><body>
 <header><h1>THE COLOSSEUM - NUMBERED 1-BLOCK GRID</h1><p>56 build layers | 188 blocks X by 156 blocks Z | mapped to YOUR Minecraft Java world</p></header>
-<aside class="quick-nav" id="quickNav" aria-label="Quick row and layer navigation">
+<aside class="quick-nav" id="quickNav" aria-label="Quick row, column, and layer navigation">
 <div class="quick-nav-title">QUICK NAV</div>
 <div class="quick-nav-section"><div class="quick-nav-label" id="quickRowLabel">Row Z 495</div>
 <button type="button" id="quickRowPrev" title="Go to the previous Z row, immediately show its fill commands">↑ Previous row</button>
 <button type="button" id="quickRowNext" title="Go to the next Z row, immediately show its fill commands">↓ Next row</button></div>
+<div class="quick-nav-section"><div class="quick-nav-label" id="quickColumnLabel">Column X 659</div>
+<button type="button" id="quickColumnPrev" title="Go west to the previous X column and show its fill commands">← Previous col.</button>
+<button type="button" id="quickColumnNext" title="Go east to the next X column and show its fill commands">→ Next col.</button></div>
 <div class="quick-nav-section"><div class="quick-nav-label" id="quickLayerLabel">Layer −7 · Y 120</div>
 <button type="button" id="quickLayerPrev" title="Go down one layer, immediately show this row's fill commands">− Layer down</button>
 <button type="button" id="quickLayerNext" title="Go up one layer, immediately show this row's fill commands">+ Layer up</button></div>
-<div class="quick-nav-hint">One click updates the row commands below. Nothing is copied automatically.</div>
+<div class="quick-nav-hint">One click previews selected row or column commands. Nothing is copied automatically.</div>
 </aside>
 <main>
 <nav class="panel wide site-tabs" aria-label="Site sections">
@@ -284,24 +287,38 @@ $('saveMap').onclick=()=>{let a=document.createElement('a');a.href=ov.toDataURL(
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')return;if(e.key==='ArrowUp')setFocus(selectedX,selectedZ-1);if(e.key==='ArrowDown')setFocus(selectedX,selectedZ+1);if(e.key==='ArrowLeft')setFocus(selectedX-1,selectedZ);if(e.key==='ArrowRight')setFocus(selectedX+1,selectedZ)});
 /* Fixed quick-nav: changing row/layer also PREVIEWS that row's commands,
    without copying to the clipboard or marking any blocks placed. */
+let quickCommandAxis='row'; // Layer changes keep the last quick-nav row/column mode.
 function updateQuickNav(){
   $('quickRowLabel').textContent='Row Z '+(Z0+selectedZ);
+  $('quickColumnLabel').textContent='Column X '+(X0+selectedX);
   $('quickLayerLabel').textContent='Layer '+(layer>=0?'+':'')+layer+' · Y '+(Y0+layer);
   $('quickRowPrev').disabled=selectedZ===0;
   $('quickRowNext').disabled=selectedZ===H-1;
+  $('quickColumnPrev').disabled=selectedX===0;
+  $('quickColumnNext').disabled=selectedX===W-1;
   $('quickLayerPrev').disabled=layer===-7;
   $('quickLayerNext').disabled=layer===48;
 }
-function showCurrentRowCommands(){
-  const text=commands('row');
+function showCurrentLineCommands(){
+  const text=commands(quickCommandAxis);
   $('commands').value=text;
   showIndividualCommands(text); // Progress-tracker wrapper adds Mark placed buttons.
   $('individualCommands').scrollTop=0;
 }
+function showCurrentRowCommands(){
+  quickCommandAxis='row';
+  showCurrentLineCommands();
+}
+function showCurrentColumnCommands(){
+  quickCommandAxis='column';
+  showCurrentLineCommands();
+}
 $('quickRowPrev').addEventListener('click',()=>{if(selectedZ>0){setFocus(selectedX,selectedZ-1);showCurrentRowCommands();}});
 $('quickRowNext').addEventListener('click',()=>{if(selectedZ<H-1){setFocus(selectedX,selectedZ+1);showCurrentRowCommands();}});
-$('quickLayerPrev').addEventListener('click',()=>{if(layer>-7){layer--;render();showCurrentRowCommands();}});
-$('quickLayerNext').addEventListener('click',()=>{if(layer<48){layer++;render();showCurrentRowCommands();}});
+$('quickColumnPrev').addEventListener('click',()=>{if(selectedX>0){setFocus(selectedX-1,selectedZ);showCurrentColumnCommands();}});
+$('quickColumnNext').addEventListener('click',()=>{if(selectedX<W-1){setFocus(selectedX+1,selectedZ);showCurrentColumnCommands();}});
+$('quickLayerPrev').addEventListener('click',()=>{if(layer>-7){layer--;render();showCurrentLineCommands();}});
+$('quickLayerNext').addEventListener('click',()=>{if(layer<48){layer++;render();showCurrentLineCommands();}});
 render();
 </script><script>
 /* COLOSSEUM PROGRESS TRACKER v2.0
