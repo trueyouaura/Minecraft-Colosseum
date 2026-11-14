@@ -1,4 +1,4 @@
-name: Deploy Colosseum (Node.js 24 actions)
+name: Deploy Minecraft Blueprint Sites (Node.js 24)
 
 on:
   push:
@@ -24,11 +24,14 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
 
-      - name: Package static Colosseum website
+      - name: Package Colosseum and Arrowhead blueprint sites
         run: |
           mkdir -p _site
           cp index.html _site/index.html
+          mkdir -p _site/arrowhead
+          cp arrowhead/index.html _site/arrowhead/index.html
           test -s _site/index.html
+          test -s _site/arrowhead/index.html
           tar --directory _site -cf "$RUNNER_TEMP/artifact.tar" .
 
       # upload-pages-artifact@v4 still bundles upload-artifact@v4 (Node 20).
